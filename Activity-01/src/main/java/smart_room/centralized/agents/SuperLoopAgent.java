@@ -6,6 +6,7 @@ public class SuperLoopAgent extends Thread {
 
     final private double threshold;
     final private SinglelBoardSimulator board = new SinglelBoardSimulator();
+    private Status status = Status.OFF;
 
     public SuperLoopAgent(double threshold) {
         this.threshold = threshold;
@@ -20,14 +21,19 @@ public class SuperLoopAgent extends Thread {
             final double luminosity = board.getLuminosity();
 
             // decide what to do and act
-            if (presenceDetected)  {
-                if (luminosity < threshold) {
-                    board.on();
-                } else {
-                    board.off();
-                }
-            } else {
-                board.off();
+            switch (status) {
+                case ON:
+                    if (!presenceDetected || luminosity > threshold) {
+                        board.off();
+                        status = Status.OFF;
+                    }
+                    break;
+                case OFF:
+                    if (presenceDetected && luminosity < threshold) {
+                        board.on();
+                        status = Status.ON;
+                    }
+                    break;
             }
 
             try {

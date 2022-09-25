@@ -13,6 +13,7 @@ public class EventLoopAgent extends Thread {
     final private double threshold;
     final private SinglelBoardSimulator board = new SinglelBoardSimulator();
     final private LinkedList<Event> eventQueue = new LinkedList<>();
+    private Status status = Status.OFF;
 
     public EventLoopAgent(double threshold) {
         this.threshold = threshold;
@@ -29,18 +30,21 @@ public class EventLoopAgent extends Thread {
                 final Event ev = eventQueue.removeFirst();
 
                 // select handler and execute
-                if (ev instanceof LightLevelChanged) {
-                    if (board.presenceDetected() && ((LightLevelChanged) ev).getNewLevel() < threshold) {
-                        board.on();
-                    } else {
-                        board.off();
-                    }
-                } else if (ev instanceof PresenceDetected) {
-                    if (board.getLuminosity() < threshold) {
-                        board.on();
-                    }
-                } else if (ev instanceof PresenceNoMoreDetected) {
-                    board.off();
+                switch (status) {
+                    case ON:
+                        if ((ev instanceof LightLevelChanged && ((LightLevelChanged) ev).getNewLevel() > threshold)
+                                || (ev instanceof PresenceNoMoreDetected)) {
+                            board.off();
+                            status = Status.OFF;
+                        }
+                        break;
+                    case OFF:
+                        if ((ev instanceof LightLevelChanged && (board.presenceDetected() && ((LightLevelChanged) ev).getNewLevel() < threshold))
+                                || (ev instanceof PresenceDetected && board.getLuminosity() < threshold)) {
+                            board.on();
+                            status = Status.ON;
+                        }
+                        break;
                 }
             }
             try {
