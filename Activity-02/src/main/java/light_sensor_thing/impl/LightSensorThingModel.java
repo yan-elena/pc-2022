@@ -1,5 +1,6 @@
-package lamp_thing.impl;
+package light_sensor_thing.impl;
 
+import common.Event;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
@@ -9,30 +10,26 @@ import io.vertx.core.json.JsonObject;
 
 /**
  * 
- * Behaviour of the Lamp Thing 
+ * Behaviour of the Light Sensor Thing 
  * 
  * @author aricci
  *
  */
-public class LampThingModel implements LampThingAPI {
+public class LightSensorThingModel implements LightSensorThingAPI {
 
 	private Vertx vertx;
 
-	private String state;
+	private double lightLevel;
 	
 	private String thingId;
 	private JsonObject td;
-	private LampDeviceSimulator ld;
+	private LightSensorSimulator ls;
 	
 
-	public LampThingModel(String thingId) {
-		log("Creating the light thing simulator.");
+	public LightSensorThingModel(String thingId) {
+		log("Creating the light sensor simulator.");
 		this.thingId = thingId;
-		
-	    state = "off";
-	    
-		ld = new LampDeviceSimulator(thingId);
-		ld.init();	    
+		ls = new LightSensorSimulator(thingId);
 	}
 	
 	public void setup(Vertx vertx) {
@@ -41,7 +38,7 @@ public class LampThingModel implements LampThingAPI {
 		
 		td.put("@context", "https://www.w3.org/2019/wot/td/v1");
 		td.put("id", thingId);
-		td.put("title", "MyLampThing");
+		td.put("title", "MyLightSensorThing");
 		
 		/* security section */
 
@@ -58,35 +55,37 @@ public class LampThingModel implements LampThingAPI {
 		JsonObject props = new JsonObject();
 		td.put("properties", props);
 		JsonObject state = new JsonObject();
-		props.put("state", state);		
-		state.put("type", "string");
+		props.put("lightLevel", state);		
+		state.put("type", "number");
 		state.put("forms", new JsonArray());
-				
-		/* actions */
-		
-		JsonObject actions = new JsonObject();
-		td.put("actions", actions);
-		JsonObject on = new JsonObject();
-		actions.put("on", on);		
-		on.put("forms", new JsonArray());
-		JsonObject off = new JsonObject();
-		actions.put("off", off);		
-		off.put("forms", new JsonArray());
-		
+						
 		/* events */
 		
 		JsonObject events = new JsonObject();
 		td.put("events", events);
-		JsonObject stateChanged = new JsonObject();
-		events.put("stateChanged", stateChanged);		
+		
+		JsonObject lightLevelChanged = new JsonObject();
+		events.put("lightLevelChanged", lightLevelChanged);		
 		JsonObject data = new JsonObject();
-		stateChanged.put("data", data);
+		lightLevelChanged.put("data", data);
 		JsonObject dataType = new JsonObject();
 		data.put("type", dataType);
-		dataType.put("state", "string");
+		dataType.put("lightLevel", "number");
 		dataType.put("timestamp", "decimal"); // better would be: "time"
-		stateChanged.put("forms",  new JsonArray());
-
+		lightLevelChanged.put("forms",  new JsonArray());
+		
+		ls.init();
+		this.lightLevel = 0;
+		ls.register((Event ev) -> {
+			synchronized (this) {
+				if (ev instanceof LightLevelChanged) {
+					this.lightLevel = ((LightLevelChanged) ev).getNewLevel();
+			    	this.notifyNewLevel();	    
+				}
+			}
+		});
+		
+		
 	}
 
 	public Future<JsonObject> getTD() {
@@ -96,39 +95,19 @@ public class LampThingModel implements LampThingAPI {
 	}
 
 	@Override
-	public Future<String> getState() {
-		Promise<String> p = Promise.promise();
+	public Future<Double> getLightLevel() {
+		Promise<Double> p = Promise.promise();
 		synchronized (this) {
-			p.complete(state);
+			p.complete(lightLevel);
 		}
 		return p.future();
 	}
 
-	@Override
-	public Future<Void> on() {
-		Promise<Void> p = Promise.promise();
-		ld.on();
-	    state = "on";
-    	this.notifyNewPropertyStatus();	    
-		p.complete();
-		return p.future();
-	}
-
-	@Override
-	public Future<Void> off() {
-		Promise<Void> p = Promise.promise();
-		ld.off();
-	    state = "off";
-    	this.notifyNewPropertyStatus();	    
-		p.complete();
-		return p.future();
-	}
-	
-	private void notifyNewPropertyStatus() {
+	private void notifyNewLevel() {
 	    JsonObject ev = new JsonObject();
-		ev.put("event", "stateChanged");
+		ev.put("event", "lightLevelChanged");
 	    JsonObject data = new JsonObject();
-		data.put("state", state);
+		data.put("lightLevel", lightLevel);
 		ev.put("data", data);			
 		ev.put("timestamp", System.currentTimeMillis());
 		this.generateEvent(ev);
@@ -148,7 +127,7 @@ public class LampThingModel implements LampThingAPI {
 	}
 		
 	protected void log(String msg) {
-		System.out.println("[LampThingModel]["+System.currentTimeMillis()+"] " + msg);
+		System.out.println("[LightSensorThingModel]["+System.currentTimeMillis()+"] " + msg);
 	}
 	
 }

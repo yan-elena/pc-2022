@@ -1,8 +1,10 @@
-package lamp_thing.impl;
+package pres_detect_thing.impl;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
+import common.ThingAbstractAdapter;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -10,22 +12,19 @@ import io.vertx.core.Promise;
 
 /**
  * 
- * Light Thing Service 
- * 
- * - enabling the interaction with a light thing
- * 
+ * Presence Detection Thing Service 
+ *  
  * @author aricci
  *
  */
-public class LampThingService extends AbstractVerticle {
+public class PresDetectThingService extends AbstractVerticle {
 
-	private LampThingAPI model;
+	private PresDetectThingAPI model;
 	private List<ThingAbstractAdapter> adapters;
 	
-	public static final int HTTP_PORT = 8888;
-	public static final int MQTT_PORT = 1883;
+	public static final int HTTP_PORT = 8889;
 	
-	public LampThingService(LampThingAPI model) {
+	public PresDetectThingService(PresDetectThingAPI model) {
 		this.model = model;
 		adapters = new LinkedList<ThingAbstractAdapter>();
 	}
@@ -48,7 +47,7 @@ public class LampThingService extends AbstractVerticle {
 			/*
 			 * Installing only the HTTP adapter.
 			 */
-			LampThingHTTPAdapter httpAdapter = new LampThingHTTPAdapter(model, "localhost", HTTP_PORT, this.getVertx());
+			PresDetectThingHTTPAdapter httpAdapter = new PresDetectThingHTTPAdapter(model, "localhost", HTTP_PORT, this.getVertx());
 			Promise<Void> p = Promise.promise();
 			httpAdapter.setupAdapter(p);
 			Future<Void> fut = p.future();
@@ -62,26 +61,7 @@ public class LampThingService extends AbstractVerticle {
 		} catch (Exception ex) {
 			log("HTTP adapter installation failed.");
 		}
-				
-		try {
-			/*
-			 * Installing MQTT adapter.
-			 */
-			LampThingMQTTAdapter mqttAdapter = new LampThingMQTTAdapter(model, "localhost", MQTT_PORT, this.getVertx());
-			Promise<Void> p = Promise.promise();
-			mqttAdapter.setupAdapter(p);
-			Future<Void> fut = p.future();
-			allFutures.add(fut);
-			fut.onSuccess(res -> {
-				log("MQTT adapter installed.");
-				adapters.add(mqttAdapter);
-			}).onFailure(f -> {
-				log("MQTT adapter not installed.");
-			});
-		} catch (Exception ex) {
-			log("MQTT adapter installation failed.");
-		}
-		
+						
 		CompositeFuture.all(allFutures).onComplete(res -> {
 			log("Adapters installed.");
 			promise.complete();
@@ -89,6 +69,6 @@ public class LampThingService extends AbstractVerticle {
 	}
 
 	protected void log(String msg) {
-		System.out.println("[LampThingService] " + msg);
+		System.out.println("[PresDetectThingService] " + msg);
 	}
 }
