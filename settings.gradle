@@ -1,0 +1,4 @@
+rootProject.name = "pc-2022-main"
+include(":Activity-01")
+include(":Activity-02")
+include(":Activity-03")
