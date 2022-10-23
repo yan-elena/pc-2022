@@ -43,7 +43,7 @@ public class LampDTModel implements LampDTAppAPI, LampDTShadAPI {
 	public Future<JsonObject> getState() {
 		Promise<JsonObject> p = Promise.promise();
 		JsonObject state = new JsonObject();
-		synchronized (this) {
+		synchronized (this) { //todo: non c'è bisogno di utilizzare synchronized perchè è un event loop
 			state.put("state", this.state);
 			state.put("lastUpdatePA", lastUpdatePATime);
 			state.put("lastUpdateDT", lastUpdateDTTime);			

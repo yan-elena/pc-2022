@@ -67,12 +67,12 @@ public class LampPAShadMQTT {
 		        /* handler to process MQTT msgs on the event-loop */ 
 		        vertx.eventBus().consumer("shadowing", this::handleShadowing);   
 
-		        
+		        // in the thing part, I subscribe the model, and I sending the message to the other module on the dt
 				this.model.subscribe(ev -> {
 					JsonObject syncMsg = new JsonObject();
 					syncMsg.put("msg", "sync-event");
 					syncMsg.put("syncData",  ev);
-					sendMsg(shadowingTopicFromPAtoDT,syncMsg);
+					sendMsg(shadowingTopicFromPAtoDT,syncMsg); //sending msg for a topic
 				});
 		        promise.complete();
 	        } catch (Exception ex) {
@@ -128,7 +128,7 @@ public class LampPAShadMQTT {
 	*/
 	
 	/*
-	 * Messages from the DT
+	 * Messages from the DT, and then update the digital twin
 	 */	
 	private void handleShadowing(Message<String> msg) {
 		log("Processing new shadowing: " + msg.body());

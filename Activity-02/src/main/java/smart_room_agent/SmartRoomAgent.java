@@ -67,6 +67,7 @@ public class SmartRoomAgent extends AbstractVerticle {
 		log("init ok.");
 }
 
+	//every event should be triggered by this method
 	protected void processEvent(JsonObject ev) {
 		
 		/* first check for updates about the environments */ 
@@ -118,6 +119,7 @@ public class SmartRoomAgent extends AbstractVerticle {
 		}
 	}
 
+	// what the agent believe the current state of env
 	protected void updateLocalBeliefs(JsonObject ev) {
 		String evType = ev.getString("event");
 
